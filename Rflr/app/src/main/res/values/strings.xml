@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">rflr</string>
+    <string name="host_game_btntxt">Host Game</string>
+    <string name="connect_game_btntxt">Connect to Game</string>
+</resources>
