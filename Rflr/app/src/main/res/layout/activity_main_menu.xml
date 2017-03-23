@@ -7,19 +7,23 @@
     tools:context="dk.sdu.mmmi.ap.g17.rflr.MainMenu">
 
     <Button
-        android:id="@+id/button"
-        android:layout_width="368dp"
-        android:layout_height="wrap_content"
+        android:id="@+id/host_btn"
+        android:layout_width="344dp"
+        android:layout_marginTop="42dp"
         android:text="@string/host_game_btntxt"
-        tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="33dp" />
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_height="0dp"
+        app:layout_constraintRight_toRightOf="parent" />
 
     <Button
-        android:id="@+id/button2"
-        android:layout_width="368dp"
-        android:layout_height="wrap_content"
+        android:id="@+id/connect_btn"
+        android:layout_width="344dp"
+        android:layout_height="0dp"
         android:text="@string/connect_game_btntxt"
-        tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="91dp" />
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/host_btn"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="0dp" />
 
 </android.support.constraint.ConstraintLayout>
