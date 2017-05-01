@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,9 +20,16 @@ import java.util.UUID;
 import java.util.logging.SocketHandler;
 
 import static android.content.ContentValues.TAG;
+import android.hardware.Sensor;
+import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
 
 public class MainMenu extends AppCompatActivity {
 
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private ShakeDetector mShakeDetector;
 
     private static final int REQUEST_ENABLE_BT = 1;
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -30,31 +38,49 @@ public class MainMenu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
+        setupShakeDetector();
 
         //BluetoothConnection
         System.out.println("dfs");
-        if(mBluetoothAdapter == null){
+        if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
-        } if(!mBluetoothAdapter.isEnabled()){
+        }
+        if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 
-        if(pairedDevices.size() > 0){
-            for (BluetoothDevice device : pairedDevices){
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice device : pairedDevices) {
                 String devicename = device.getName();
                 String deviceHardwareAddress = device.getAddress(); // MAC address
             }
         }
-
         // Register for broadcasts when a device is discovered.
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mReciver, filter);
         System.out.println("kfk");
-
     }
+
+    private void setupShakeDetector() {
+        // ShakeDetector initialization
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mShakeDetector = new ShakeDetector();
+        mShakeDetector.setOnShakeListener(new OnShakeListener() {
+
+            //Define what should be done on shake event
+            @Override
+            public void onShake() {
+                Toast.makeText(getApplicationContext(), "Shake that bad boy!", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+
 
     private final BroadcastReceiver mReciver = new BroadcastReceiver() {
         @Override
@@ -89,7 +115,7 @@ public class MainMenu extends AppCompatActivity {
 
     public void connectToGame(View view){
         // Connect to Hosting device
-        mBluetoothAdapter.startDiscovery(); 
+        mBluetoothAdapter.startDiscovery();
 
         System.out.println(mBluetoothAdapter.isDiscovering());
     }
@@ -154,6 +180,26 @@ public class MainMenu extends AppCompatActivity {
             }
         }
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+        //Register the Sensor Manager onResume
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer,	SensorManager.SENSOR_DELAY_UI);
+    }
 
+    @Override
+    public void onPause() {
+        //unregister the Sensor Manager onPause
+        mSensorManager.unregisterListener(mShakeDetector);
+        super.onPause();
+    }
 
+    /**
+     * Test method to show find out how to call method from button
+     * @param v
+     */
+    public void pressMeBtnHandler1(View v){
+        //Show toast
+        Toast.makeText(getApplicationContext(), "You clicked me!", Toast.LENGTH_SHORT).show();
+    }
 }
