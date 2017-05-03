@@ -6,19 +6,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.Sensor;
-import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 public class MainMenu extends AppCompatActivity {
 
-    private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
-    private ShakeDetector mShakeDetector;
 
     private static final int REQUEST_ENABLE_BT = 1;
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -27,7 +21,6 @@ public class MainMenu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
-        setupShakeDetector();
 
         BluetoothService.getInstance().setmContext(getApplicationContext());
 
@@ -46,21 +39,7 @@ public class MainMenu extends AppCompatActivity {
         registerReceiver(mReciver, filter);
     }
 
-    private void setupShakeDetector() {
-        // ShakeDetector initialization
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager
-                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mShakeDetector = new ShakeDetector();
-        mShakeDetector.setOnShakeListener(new OnShakeListener() {
 
-            //Define what should be done on shake event
-            @Override
-            public void onShake() {
-                Toast.makeText(getApplicationContext(), "Shake that bad boy!", Toast.LENGTH_LONG).show();
-            }
-        });
-    }
 
     private final BroadcastReceiver mReciver = new BroadcastReceiver() {
         @Override
@@ -113,21 +92,6 @@ public class MainMenu extends AppCompatActivity {
 
         unregisterReceiver(mReciver);
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        //Register the Sensor Manager onResume
-        mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
-    }
-
-    @Override
-    public void onPause() {
-        //unregister the Sensor Manager onPause
-        mSensorManager.unregisterListener(mShakeDetector);
-        super.onPause();
-    }
-
 
     //Switch activity using an intent
     public void startIngame(View v) {

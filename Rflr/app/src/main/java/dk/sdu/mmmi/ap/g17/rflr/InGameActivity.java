@@ -1,7 +1,10 @@
 package dk.sdu.mmmi.ap.g17.rflr;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -17,11 +20,16 @@ public class InGameActivity extends AppCompatActivity {
     private ImageAdapter imageAdapter;
     private final int EYES = 6;
     private int totalNumberOfDice = 15;
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private ShakeDetector mShakeDetector;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_in_game);
+        setupShakeDetector();
 
         diceShown = true;
         fillSpinnerArrays();
@@ -29,6 +37,22 @@ public class InGameActivity extends AppCompatActivity {
         GridView imageGridView = (GridView) findViewById(R.id.image_grid_view);
         imageAdapter = new ImageAdapter(this);
         imageGridView.setAdapter(imageAdapter);
+    }
+
+    private void setupShakeDetector() {
+        // ShakeDetector initialization
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mShakeDetector = new ShakeDetector();
+        mShakeDetector.setOnShakeListener(new OnShakeListener() {
+
+            //Define what should be done on shake event
+            @Override
+            public void onShake() {
+                Toast.makeText(getApplicationContext(), "Shake that bad boy!", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     /**
@@ -107,5 +131,19 @@ public class InGameActivity extends AppCompatActivity {
 
     public void liftBtnHandler(View v){
         Toast.makeText(getApplicationContext(), "We have liftoff!", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        //Register the Sensor Manager onResume
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
+    }
+
+    @Override
+    public void onPause() {
+        //unregister the Sensor Manager onPause
+        mSensorManager.unregisterListener(mShakeDetector);
+        super.onPause();
     }
 }
