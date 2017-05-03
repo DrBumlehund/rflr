@@ -20,7 +20,7 @@ public class Cup {
     }
 
     public Cup(int nDice) {
-        hasPeekedThisRound = false;
+        hasRolledThisRound = false;
         dice = new ArrayList<>();
         setUpArray(nDice);
     }
@@ -32,20 +32,21 @@ public class Cup {
     }
 
     private ArrayList<Die> dice;
-    private boolean hasPeekedThisRound;
-
-    public void peek() {
-        hasPeekedThisRound = true;
-    }
+    private boolean hasRolledThisRound;
 
     public void newRound() {
-        hasPeekedThisRound = false;
+        // TODO: REMEMBER TO CALL THIS ON NEW ROUND!
+        hasRolledThisRound = false;
     }
 
     public void roolAllDice() {
-        for (Die d : dice) {
-            d.roll();
+        if (!hasRolledThisRound) {
+            for (Die d : dice) {
+                d.roll();
+            }
+            hasRolledThisRound = true;
         }
+
     }
 
     private boolean hasStair() {
