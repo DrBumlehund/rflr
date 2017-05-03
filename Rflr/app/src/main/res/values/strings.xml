@@ -1,5 +1,14 @@
 <resources>
     <string name="app_name">rflr</string>
     <string name="host_game_btntxt">Host Game</string>
+    <string name="in_game_hide_btntxt">Hide dice</string>
+    <string name="in_game_show_btntxt">Show dice</string>
     <string name="connect_game_btntxt">Connect to Game</string>
+    <string name="in_game_make_guess_btntxt">Make guess</string>
+    <string name="in_game_number_of_dice_spinner_label">Number of dice</string>
+    <string name="in_game_die_eyes_spinner_label">Eyes</string>
+    <string name="in_game_lift_btntxt">Lift</string>
+    <string name="lift_labeltxt">Last call: </string>
+    <string name="last_call_labeltxt">Unknown</string>
+
 </resources>

@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
@@ -202,5 +203,12 @@ public class MainMenu extends AppCompatActivity {
     public void pressMeBtnHandler1(View v) {
         //Show toast
         Toast.makeText(getApplicationContext(), "You clicked me!", Toast.LENGTH_SHORT).show();
+    }
+
+    //Switch activity using an intent
+    public void startIngame(View v){
+        Intent myIntent = new Intent(MainMenu.this, InGameActivity.class);
+        //myIntent.putExtra("key", value); //Optional for passing extra info
+        MainMenu.this.startActivity(myIntent);
     }
 }
