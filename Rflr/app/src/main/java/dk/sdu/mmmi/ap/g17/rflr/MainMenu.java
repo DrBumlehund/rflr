@@ -8,28 +8,27 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.SocketHandler;
 
 import static android.content.ContentValues.TAG;
-import android.hardware.Sensor;
-import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 public class MainMenu extends AppCompatActivity {
-    //Sensor stuff for shake detection
+
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private ShakeDetector mShakeDetector;
+    private final UUID myUUID = UUID.fromString("71dea7b0-26e8-4070-89b5-b68d4b91bda7");
+
 
     private static final int REQUEST_ENABLE_BT = 1;
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -38,7 +37,6 @@ public class MainMenu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
-        //Shake detection setup
         setupShakeDetector();
 
         //BluetoothConnection
@@ -51,18 +49,9 @@ public class MainMenu extends AppCompatActivity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-
-        if (pairedDevices.size() > 0) {
-            for (BluetoothDevice device : pairedDevices) {
-                String devicename = device.getName();
-                String deviceHardwareAddress = device.getAddress(); // MAC address
-            }
-        }
         // Register for broadcasts when a device is discovered.
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mReciver, filter);
-        System.out.println("kfk");
     }
 
     private void setupShakeDetector() {
@@ -89,8 +78,8 @@ public class MainMenu extends AppCompatActivity {
             String action = intent.getAction();
             if(BluetoothDevice.ACTION_FOUND.equals(action)){
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                String deviceName = device.getName();
-                String deviceHardwareAddress = device.getAddress();
+                ConnectThread connection = new ConnectThread(device);
+                connection.run();
             }
         }
     };
@@ -105,18 +94,29 @@ public class MainMenu extends AppCompatActivity {
     }
 
     public void hostGame(View view){
-        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
-        startActivity(discoverableIntent);
-        // Start server stuff
-        AcceptThread host = new AcceptThread();
-        host.run();
+        if(mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE)
+        {
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+            intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, (60*30));
+            startActivityForResult(intent, 1);
+        }
+        if(mBluetoothAdapter.getScanMode() == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE)
+        {
+            // Start server stuff
 
+            // Toast not working  ¯\_(ツ)_/¯
+            Toast.makeText(getApplicationContext(), "Blocking 30s to establish connections", Toast.LENGTH_LONG).show();
+
+            AcceptThread host = new AcceptThread();
+            host.run();
+            host.cancel();
+        }
     }
 
     public void connectToGame(View view){
         // Connect to Hosting device
         mBluetoothAdapter.startDiscovery();
+
 
         System.out.println(mBluetoothAdapter.isDiscovering());
     }
@@ -135,7 +135,6 @@ public class MainMenu extends AppCompatActivity {
 
     private class AcceptThread extends Thread {
         private final BluetoothServerSocket mmServerSocket;
-        private final UUID myUUID = UUID.fromString("71dea7b0-26e8-4070-89b5-b68d4b91bda7");
 
         public AcceptThread(){
             BluetoothServerSocket tmp = null;
@@ -151,9 +150,11 @@ public class MainMenu extends AppCompatActivity {
             BluetoothSocket socket = null;
             // Keep listening until exception occurs or a socket is returned.
             while (true) {
+
                 try{
-                    socket = mmServerSocket.accept();
+                    socket = mmServerSocket.accept(30000);
                 } catch (IOException e){
+                    Toast.makeText(getApplicationContext(), "No connections established ¯\\_(ツ)_/¯", Toast.LENGTH_LONG).show();
                     Log.e(TAG, "Socket's accept() method failed", e);
                     break;
                 }
@@ -168,6 +169,8 @@ public class MainMenu extends AppCompatActivity {
                         Log.e(TAG, "Could not close the connect socket", e);
                     }
                     break;
+                } else {
+
                 }
             }
         }
@@ -181,11 +184,64 @@ public class MainMenu extends AppCompatActivity {
             }
         }
     }
+
+    private class ConnectThread extends Thread {
+        private final BluetoothSocket mmSocket;
+        private final BluetoothDevice mmDevice;
+
+        public ConnectThread(BluetoothDevice device) {
+            // Use a temporary object that is later assigned to mmSocket
+            // because mmSocket is final.
+            BluetoothSocket tmp = null;
+            mmDevice = device;
+
+            try {
+                // Get a BluetoothSocket to connect with the given BluetoothDevice.
+                // MY_UUID is the app's UUID string, also used in the server code.
+                tmp = device.createRfcommSocketToServiceRecord(myUUID);
+            } catch (IOException e) {
+                Log.e(TAG, "Socket's create() method failed", e);
+            }
+            mmSocket = tmp;
+        }
+
+        public void run() {
+            // Cancel discovery because it otherwise slows down the connection.
+            mBluetoothAdapter.cancelDiscovery();
+
+            try {
+                // Connect to the remote device through the socket. This call blocks
+                // until it succeeds or throws an exception.
+                mmSocket.connect();
+            } catch (IOException connectException) {
+                // Unable to connect; close the socket and return.
+                try {
+                    mmSocket.close();
+                } catch (IOException closeException) {
+                    Log.e(TAG, "Could not close the client socket", closeException);
+                }
+                return;
+            }
+
+            // The connection attempt succeeded. Perform work associated with
+            // the connection in a separate thread.
+            manageMyConnectedSocket(mmSocket);
+        }
+
+        // Closes the client socket and causes the thread to finish.
+        public void cancel() {
+            try {
+                mmSocket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Could not close the client socket", e);
+            }
+        }
+    }
     @Override
     public void onResume() {
         super.onResume();
         //Register the Sensor Manager onResume
-        mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer,	SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
@@ -194,15 +250,6 @@ public class MainMenu extends AppCompatActivity {
         mSensorManager.unregisterListener(mShakeDetector);
         super.onPause();
     }
-
-    /**
-     * Test method to show find out how to call method from button
-     *
-     * @param v
-     */
-    public void pressMeBtnHandler1(View v) {
-        //Show toast
-        Toast.makeText(getApplicationContext(), "You clicked me!", Toast.LENGTH_SHORT).show();
     }
 
     //Switch activity using an intent
@@ -210,5 +257,4 @@ public class MainMenu extends AppCompatActivity {
         Intent myIntent = new Intent(MainMenu.this, InGameActivity.class);
         //myIntent.putExtra("key", value); //Optional for passing extra info
         MainMenu.this.startActivity(myIntent);
-    }
 }
