@@ -127,11 +127,12 @@ public class MainMenu extends AppCompatActivity {
         mSensorManager.unregisterListener(mShakeDetector);
         super.onPause();
     }
-    }
+
 
     //Switch activity using an intent
-    public void startIngame(View v){
+    public void startIngame(View v) {
         Intent myIntent = new Intent(MainMenu.this, InGameActivity.class);
         //myIntent.putExtra("key", value); //Optional for passing extra info
         MainMenu.this.startActivity(myIntent);
+    }
 }
