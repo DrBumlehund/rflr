@@ -13,6 +13,7 @@
         android:layout_marginTop="42dp"
         android:onClick="pressMeBtnHandler1"
         android:text="@string/host_game_btntxt"
+        android:onClick="hostGame"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -22,6 +23,7 @@
         android:layout_width="344dp"
         android:layout_height="0dp"
         android:text="@string/connect_game_btntxt"
+        android:onClick="connectToGame"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/host_btn"
         app:layout_constraintRight_toRightOf="parent"
