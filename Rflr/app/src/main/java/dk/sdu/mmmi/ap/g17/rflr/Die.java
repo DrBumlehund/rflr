@@ -23,7 +23,7 @@ public class Die implements Comparable {
 
     protected void roll() {
         value = rng.nextInt(6) + 1;
-        value = rng.nextInt(4);
+        orientation = rng.nextInt(4);
     }
 
     protected int getValue() {
@@ -44,5 +44,6 @@ public class Die implements Comparable {
         } else {
             return 1;
         }
+
     }
 }

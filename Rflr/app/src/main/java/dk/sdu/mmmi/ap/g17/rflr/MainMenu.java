@@ -26,7 +26,7 @@ import android.view.View;
 import android.widget.Toast;
 
 public class MainMenu extends AppCompatActivity {
-
+    //Sensor stuff for shake detection
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private ShakeDetector mShakeDetector;
@@ -38,6 +38,7 @@ public class MainMenu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
+        //Shake detection setup
         setupShakeDetector();
 
         //BluetoothConnection
