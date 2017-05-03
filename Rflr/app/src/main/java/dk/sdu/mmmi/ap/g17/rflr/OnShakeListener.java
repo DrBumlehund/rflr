@@ -6,5 +6,5 @@ package dk.sdu.mmmi.ap.g17.rflr;
 
 public interface OnShakeListener {
 
-    public void onShake();
+    void onShake();
 }

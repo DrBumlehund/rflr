@@ -7,7 +7,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.util.FloatMath;
 
 /**
  * Detects shake events happening.
@@ -21,21 +20,22 @@ public class ShakeDetector implements SensorEventListener {
     private OnShakeListener mShakeListener;
     private long mShakeTimeStamp;
 
-    public ShakeDetector(){
+    public ShakeDetector() {
         this.mShakeTimeStamp = System.currentTimeMillis();
     }
 
-    public void setOnShakeListener(OnShakeListener listener){
+    public void setOnShakeListener(OnShakeListener listener) {
         this.mShakeListener = listener;
     }
 
     /**
      * Checks if the sensor has changed enough to actually register as a shake
+     *
      * @param event
      */
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (mShakeListener != null){
+        if (mShakeListener != null) {
             //Get values
             float x = event.values[0];
             float y = event.values[1];
@@ -47,10 +47,10 @@ public class ShakeDetector implements SensorEventListener {
             //gForce will be close to 1 when no movement
             double gForce = Math.sqrt(gX * gX + gY * gY + gZ * gZ);
             //Shake is enough to register
-            if (gForce > SHAKE_THRESHOLD_GRAVITY){
+            if (gForce > SHAKE_THRESHOLD_GRAVITY) {
                 final long time = System.currentTimeMillis();
                 //Shake is within the time limit after last shake
-                if (mShakeTimeStamp + SHAKE_SLEEP_TIME_MS > time){
+                if (mShakeTimeStamp + SHAKE_SLEEP_TIME_MS > time) {
                     return;
                 }
                 mShakeTimeStamp = time; //REset timestamp

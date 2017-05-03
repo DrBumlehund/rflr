@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.SensorManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -185,7 +184,7 @@ public class MainMenu extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         //Register the Sensor Manager onResume
-        mSensorManager.registerListener(mShakeDetector, mAccelerometer,	SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
@@ -197,9 +196,10 @@ public class MainMenu extends AppCompatActivity {
 
     /**
      * Test method to show find out how to call method from button
+     *
      * @param v
      */
-    public void pressMeBtnHandler1(View v){
+    public void pressMeBtnHandler1(View v) {
         //Show toast
         Toast.makeText(getApplicationContext(), "You clicked me!", Toast.LENGTH_SHORT).show();
     }
