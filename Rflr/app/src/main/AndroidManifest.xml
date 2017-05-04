@@ -23,6 +23,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".InGameActivity"></activity>
+
+        <service
+            android:name=".BluetoothService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

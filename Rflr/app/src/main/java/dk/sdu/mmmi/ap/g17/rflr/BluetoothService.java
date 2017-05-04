@@ -24,7 +24,7 @@ import java.util.UUID;
  * Created by drbum on 03-May-17.
  */
 
-class BluetoothService extends Service {
+public class BluetoothService extends Service {
     private final UUID myUUID = UUID.fromString("71dea7b0-26e8-4070-89b5-b68d4b91bda7");
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -35,6 +35,7 @@ class BluetoothService extends Service {
     private Context mContext;
     private static final String TAG = "BT_SERVICE";
     private Handler mHandler; // handler that gets info from Bluetooth service
+
 
     public void startConnected() {
         if (mConnectedThread != null) {
@@ -58,12 +59,9 @@ class BluetoothService extends Service {
     }
 
 
-    private BluetoothService() {
-    }
-
-
     public class BluetoothServiceBinder extends Binder {
         BluetoothService getService() {
+            Log.d(TAG, "getService");
             return BluetoothService.this;
         }
     }
@@ -320,7 +318,7 @@ class BluetoothService extends Service {
      */
     @Override
     public void onCreate() {
-        Log.i(TAG, "create");
+        Log.v(TAG, "create");
         super.onCreate();
 
     }
@@ -334,7 +332,7 @@ class BluetoothService extends Service {
      */
     @Override
     public void onDestroy() {
-        Log.i(TAG, "destroy");
+        Log.v(TAG, "destroy");
         super.onDestroy();
 
         Log.d(TAG, "stop");

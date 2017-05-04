@@ -18,6 +18,7 @@ public class MainMenu extends AppCompatActivity {
 
 
     private static final int REQUEST_ENABLE_BT = 1;
+    private static final String TAG = "MAIN_MENU_ACTIVITY";
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private BluetoothService mBTService;
     private boolean mBtServiceBound = false;
@@ -28,7 +29,8 @@ public class MainMenu extends AppCompatActivity {
         setContentView(R.layout.activity_main_menu);
 
         Intent intent = new Intent(this, BluetoothService.class);
-        bindService(intent, mBTServiceConnection, Context.BIND_AUTO_CREATE);
+        bindService(intent, mBTServiceConnection, Context.BIND_IMPORTANT);
+        startService(intent);
         if (mBtServiceBound) {
             mBTService.setmContext(getApplicationContext());
         }
@@ -96,6 +98,7 @@ public class MainMenu extends AppCompatActivity {
     private ServiceConnection mBTServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(TAG, "bound bt service");
             BluetoothService.BluetoothServiceBinder binder = (BluetoothService.BluetoothServiceBinder) service;
             mBTService = binder.getService();
             mBtServiceBound = true;
