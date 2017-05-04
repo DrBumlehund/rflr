@@ -63,7 +63,6 @@ public class InGameActivity extends AppCompatActivity {
 
         if (mBtServiceBound) {
             mBTService.setmHandler(mHandler);
-            mBTService.setmContext(getApplicationContext());
             mBTService.startConnected();
         }
     }

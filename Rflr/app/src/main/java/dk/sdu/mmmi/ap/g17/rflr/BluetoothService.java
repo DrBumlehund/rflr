@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
@@ -32,7 +31,6 @@ public class BluetoothService extends Service {
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
     private BluetoothSocket mSocket;
-    private Context mContext;
     private static final String TAG = "BT_SERVICE";
     private Handler mHandler; // handler that gets info from Bluetooth service
 
@@ -52,10 +50,6 @@ public class BluetoothService extends Service {
         if (mConnectedThread != null) {
             mConnectedThread.write(out);
         }
-    }
-
-    public void setmContext(Context mContext) {
-        this.mContext = mContext;
     }
 
 
@@ -141,7 +135,7 @@ public class BluetoothService extends Service {
                 try {
                     socket = mmServerSocket.accept(30000);
                 } catch (IOException e) {
-                    Toast.makeText(mContext, "No connections established ¯\\_(ツ)_/¯", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "No connections established ¯\\_(ツ)_/¯", Toast.LENGTH_LONG).show();
                     Log.e(TAG, "Socket's accept() method failed", e);
                     break;
                 }
@@ -149,7 +143,7 @@ public class BluetoothService extends Service {
                 if (socket != null) {
                     // A connection was accepted. Perform work associated with
                     // the connection in a separate thread.
-                    Toast.makeText(mContext, "Connection to " + socket.getRemoteDevice().getName() + " was established", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Connection to " + socket.getRemoteDevice().getName() + " was established", Toast.LENGTH_LONG).show();
                     Log.d(TAG, "Connected to BT device: " + socket.getRemoteDevice().getName());
                     mSocket = socket;
                     try {
@@ -215,7 +209,7 @@ public class BluetoothService extends Service {
 
             // The connection attempt succeeded. Perform work associated with
             // the connection in a separate thread.
-            Toast.makeText(mContext, "Connection to " + mmDevice.getName() + " was established", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Connection to " + mmDevice.getName() + " was established", Toast.LENGTH_LONG).show();
             Log.d(TAG, "Connected to BT device: " + mmDevice.getName());
             mSocket = mmSocket;
         }

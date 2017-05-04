@@ -31,9 +31,6 @@ public class MainMenu extends AppCompatActivity {
         Intent intent = new Intent(this, BluetoothService.class);
         bindService(intent, mBTServiceConnection, Context.BIND_IMPORTANT);
         startService(intent);
-        if (mBtServiceBound) {
-            mBTService.setmContext(getApplicationContext());
-        }
 
         //BluetoothConnection
         System.out.println("dfs");
