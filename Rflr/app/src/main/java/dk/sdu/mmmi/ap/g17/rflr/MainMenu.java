@@ -3,10 +3,13 @@ package dk.sdu.mmmi.ap.g17.rflr;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -16,13 +19,19 @@ public class MainMenu extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 1;
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private BluetoothService mBTService;
+    private boolean mBtServiceBound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
 
-        BluetoothService.getInstance().setmContext(getApplicationContext());
+        Intent intent = new Intent(this, BluetoothService.class);
+        bindService(intent, mBTServiceConnection, Context.BIND_AUTO_CREATE);
+        if (mBtServiceBound) {
+            mBTService.setmContext(getApplicationContext());
+        }
 
         //BluetoothConnection
         System.out.println("dfs");
@@ -40,14 +49,15 @@ public class MainMenu extends AppCompatActivity {
     }
 
 
-
     private final BroadcastReceiver mReciver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                BluetoothService.getInstance().connect(device);
+                if (mBtServiceBound) {
+                    mBTService.connect(device);
+                }
             }
         }
     };
@@ -69,12 +79,9 @@ public class MainMenu extends AppCompatActivity {
             startActivityForResult(intent, 1);
         }
         if (mBluetoothAdapter.getScanMode() == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-            // Start server stuff
-
-            // Toast not working  ¯\_(ツ)_/¯
-//            Toast.makeText(getApplicationContext(), "Blocking 30s to establish connections", Toast.LENGTH_LONG).show();
-
-            BluetoothService.getInstance().start();
+            if (mBtServiceBound) {
+                mBTService.start();
+            }
         }
     }
 
@@ -84,6 +91,21 @@ public class MainMenu extends AppCompatActivity {
 
         System.out.println(mBluetoothAdapter.isDiscovering());
     }
+
+
+    private ServiceConnection mBTServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            BluetoothService.BluetoothServiceBinder binder = (BluetoothService.BluetoothServiceBinder) service;
+            mBTService = binder.getService();
+            mBtServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBtServiceBound = false;
+        }
+    };
 
 
     @Override
@@ -99,8 +121,9 @@ public class MainMenu extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        BluetoothService.getInstance().stop();
+        unbindService(mBTServiceConnection);
     }
+
     //Switch activity using an intent
     public void startIngame(View v) {
         Intent myIntent = new Intent(MainMenu.this, InGameActivity.class);

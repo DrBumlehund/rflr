@@ -1,12 +1,16 @@
 package dk.sdu.mmmi.ap.g17.rflr;
 
+import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
@@ -20,8 +24,7 @@ import java.util.UUID;
  * Created by drbum on 03-May-17.
  */
 
-class BluetoothService {
-    private static final BluetoothService ourInstance = new BluetoothService();
+class BluetoothService extends Service {
     private final UUID myUUID = UUID.fromString("71dea7b0-26e8-4070-89b5-b68d4b91bda7");
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -54,11 +57,22 @@ class BluetoothService {
         this.mContext = mContext;
     }
 
-    static BluetoothService getInstance() {
-        return ourInstance;
-    }
 
     private BluetoothService() {
+    }
+
+
+    public class BluetoothServiceBinder extends Binder {
+        BluetoothService getService() {
+            return BluetoothService.this;
+        }
+    }
+
+    private BluetoothServiceBinder mBinder = new BluetoothServiceBinder();
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
     }
 
     /**
@@ -300,10 +314,29 @@ class BluetoothService {
         }
     }
 
+
     /**
-     * Stop all threads
+     * Called by the system when the service is first created.  Do not call this method directly.
      */
-    public synchronized void stop() {
+    @Override
+    public void onCreate() {
+        Log.i(TAG, "create");
+        super.onCreate();
+
+    }
+
+
+    /**
+     * Called by the system to notify a Service that it is no longer used and is being removed.  The
+     * service should clean up any resources it holds (threads, registered
+     * receivers, etc) at this point.  Upon return, there will be no more calls
+     * in to this Service object and it is effectively dead.  Do not call this method directly.
+     */
+    @Override
+    public void onDestroy() {
+        Log.i(TAG, "destroy");
+        super.onDestroy();
+
         Log.d(TAG, "stop");
 
         if (mConnectThread != null) {
@@ -320,6 +353,5 @@ class BluetoothService {
             mAcceptThread.cancel();
             mAcceptThread = null;
         }
-
     }
 }

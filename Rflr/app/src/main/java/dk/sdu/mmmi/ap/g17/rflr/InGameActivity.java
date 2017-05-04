@@ -1,10 +1,14 @@
 package dk.sdu.mmmi.ap.g17.rflr;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -31,15 +35,22 @@ public class InGameActivity extends AppCompatActivity {
     private ShakeDetector mShakeDetector;
     private Cup cup;
     private boolean hasSentCup;
+    private boolean mBtServiceBound;
+
+    private BluetoothService mBTService;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.v(TAG, "Whats up my dudes");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_in_game);
         setupShakeDetector();
         diceShown = true;
         hasSentCup = false;
+
+        Intent intent = new Intent(this, BluetoothService.class);
+        bindService(intent, mBTServiceConnection, Context.BIND_AUTO_CREATE);
 
         fillSpinnerArrays();
 
@@ -50,9 +61,11 @@ public class InGameActivity extends AppCompatActivity {
         cup = new Cup(6);
         updateDiceImages();
 
-        BluetoothService.getInstance().setmHandler(mHandler);
-        BluetoothService.getInstance().setmContext(getApplicationContext());
-        BluetoothService.getInstance().startConnected();
+        if (mBtServiceBound) {
+            mBTService.setmHandler(mHandler);
+            mBTService.setmContext(getApplicationContext());
+            mBTService.startConnected();
+        }
     }
 
     private void setupShakeDetector() {
@@ -149,20 +162,26 @@ public class InGameActivity extends AppCompatActivity {
         int numberOfDice = (int) numberOfDiceSpinner.getSelectedItem();
         Toast.makeText(getApplicationContext(), "Eyes: " + eyes + " Dice: " + numberOfDice, Toast.LENGTH_SHORT).show();
 
-        // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; AMOUNT OF DIES : DIE EYES
-        String message = BluetoothService.getInstance().getBluetoothName() + ";" + Constants.GUESS + ";" + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem();
-        byte[] bytes = message.getBytes();
-        Log.v(TAG, message + " ByteLength: " + bytes.length);
-        if (bytes != null) {
-            BluetoothService.getInstance().write(bytes);
+
+        if (mBtServiceBound) {
+            // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; AMOUNT OF DIES : DIE EYES
+            String message = mBTService.getBluetoothName() + ";" + Constants.GUESS + ";" + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem();
+            byte[] bytes = message.getBytes();
+            Log.v(TAG, message + " ByteLength: " + bytes.length);
+            if (bytes != null) {
+                mBTService.write(bytes);
+            }
         }
     }
 
     private void sendCup() {
-        // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; #1's : 1, #2's : 2, ...
-        String message = BluetoothService.getInstance().getBluetoothName() + ";" + Constants.CUP + ";" + cup.toString();
-        BluetoothService.getInstance().write(message.getBytes());
-        hasSentCup = true;
+
+        if (mBtServiceBound) {
+            // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; #1's : 1, #2's : 2, ...
+            String message = mBTService.getBluetoothName() + ";" + Constants.CUP + ";" + cup.toString();
+            mBTService.write(message.getBytes());
+            hasSentCup = true;
+        }
     }
 
     public void liftBtnHandler(View v) {
@@ -212,6 +231,19 @@ public class InGameActivity extends AppCompatActivity {
         }
     };
 
+    private ServiceConnection mBTServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            BluetoothService.BluetoothServiceBinder binder = (BluetoothService.BluetoothServiceBinder) service;
+            mBTService = binder.getService();
+            mBtServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBtServiceBound = false;
+        }
+    };
 
     private String[] DecodeByteMessage(byte[] message) {
         String readMsg = new String(message);
@@ -235,6 +267,6 @@ public class InGameActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        BluetoothService.getInstance().stop();
+        unbindService(mBTServiceConnection);
     }
 }
