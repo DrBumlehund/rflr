@@ -59,6 +59,18 @@ public class Cup {
         return true;
     }
 
+    @Override
+    public String toString() {
+        String cup = "";
+        HashMap<Integer, Integer> score = getScore();
+        for (Integer die :
+                score.keySet()) {
+            cup += score.get(die) + ":" + die + ",";
+        }
+        cup = cup.substring(cup.length() - 1);
+        return cup;
+    }
+
     public void removeDie() {
         dice.remove(dice.size() - 1);
     }

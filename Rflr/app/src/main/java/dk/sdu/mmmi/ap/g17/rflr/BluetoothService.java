@@ -29,26 +29,25 @@ class BluetoothService {
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
     private BluetoothSocket mSocket;
-    private int mState;
-    private int mNewState;
     private Context mContext;
     private static final String TAG = "BT_SERVICE";
     private Handler mHandler; // handler that gets info from Bluetooth service
 
-    public void startRead() {
-        connectedThread.run();
+    public void startConnected() {
+        if (mConnectedThread != null) {
+            mConnectedThread.cancel();
+            mConnectedThread = null;
+        }
+        if (mSocket != null) {
+            mConnectedThread = new ConnectedThread(mSocket);
+            mConnectedThread.run();
+        }
     }
 
     public void write(byte[] out) {
-        // Create temporary object
-        ConnectedThread r;
-        // Synchronize a copy of the ConnectedThread
-        synchronized (this) {
-            //if (mState != STATE_CONNECTED) return;
-            r = connectedThread;
+        if (mConnectedThread != null) {
+            mConnectedThread.write(out);
         }
-        // Perform the write unsynchronized
-        r.write(out);
     }
 
     public void setmContext(Context mContext) {
@@ -62,19 +61,13 @@ class BluetoothService {
     private BluetoothService() {
     }
 
-    private ConnectedThread connectedThread;
-
-    public void initializeBluetoothConnection(BluetoothSocket socket) {
-        connectedThread = new ConnectedThread(socket);
-    }
-
-
-    // Defines several constants used when transmitting messages between the
-    // service and the UI.
-    private interface MessageConstants {
-        int MESSAGE_READ = 0;
-        int MESSAGE_WRITE = 1;
-        int MESSAGE_TOAST = 2;
+    /**
+     * Gets the Bluetooth name for this device.
+     *
+     * @return string containing this device bluetooth name.
+     */
+    public String getBluetoothName() {
+        return mBluetoothAdapter.getName();
     }
 
     public void connect(BluetoothDevice device) {
@@ -111,6 +104,10 @@ class BluetoothService {
         mAcceptThread.run();
     }
 
+    public void setmHandler(Handler handler) {
+        this.mHandler = handler;
+    }
+
     private class AcceptThread extends Thread {
         private final BluetoothServerSocket mmServerSocket;
 
@@ -130,7 +127,7 @@ class BluetoothService {
             while (true) {
 
                 try {
-                    socket = mmServerSocket.accept(3000);
+                    socket = mmServerSocket.accept(30000);
                 } catch (IOException e) {
                     Toast.makeText(mContext, "No connections established ¯\\_(ツ)_/¯", Toast.LENGTH_LONG).show();
                     Log.e(TAG, "Socket's accept() method failed", e);
@@ -140,6 +137,8 @@ class BluetoothService {
                 if (socket != null) {
                     // A connection was accepted. Perform work associated with
                     // the connection in a separate thread.
+                    Toast.makeText(mContext, "Connection to " + socket.getRemoteDevice().getName() + " was established", Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "Connected to BT device: " + socket.getRemoteDevice().getName());
                     mSocket = socket;
                     try {
                         mmServerSocket.close();
@@ -258,7 +257,7 @@ class BluetoothService {
                     numBytes = mmInStream.read(mmBuffer);
                     // Send the obtained bytes to the UI activity.
                     Message readMsg = mHandler.obtainMessage(
-                            MessageConstants.MESSAGE_READ, numBytes, -1,
+                            Constants.MESSAGE_READ, numBytes, -1,
                             mmBuffer);
                     readMsg.sendToTarget();
                 } catch (IOException e) {
@@ -275,16 +274,16 @@ class BluetoothService {
 
                 // Share the sent message with the UI activity.
                 Message writtenMsg = mHandler.obtainMessage(
-                        MessageConstants.MESSAGE_WRITE, -1, -1, mmBuffer);
+                        Constants.MESSAGE_WRITE, -1, -1, mmBuffer);
                 writtenMsg.sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Error occurred when sending data", e);
 
                 // Send a failure message back to the activity.
                 Message writeErrorMsg =
-                        mHandler.obtainMessage(MessageConstants.MESSAGE_TOAST);
+                        mHandler.obtainMessage(Constants.MESSAGE_TOAST);
                 Bundle bundle = new Bundle();
-                bundle.putString("toast",
+                bundle.putString(Constants.TOAST_KEY,
                         "Couldn't send data to the other device");
                 writeErrorMsg.setData(bundle);
                 mHandler.sendMessage(writeErrorMsg);
@@ -301,5 +300,26 @@ class BluetoothService {
         }
     }
 
+    /**
+     * Stop all threads
+     */
+    public synchronized void stop() {
+        Log.d(TAG, "stop");
 
+        if (mConnectThread != null) {
+            mConnectThread.cancel();
+            mConnectThread = null;
+        }
+
+        if (mConnectedThread != null) {
+            mConnectedThread.cancel();
+            mConnectedThread = null;
+        }
+
+        if (mAcceptThread != null) {
+            mAcceptThread.cancel();
+            mAcceptThread = null;
+        }
+
+    }
 }

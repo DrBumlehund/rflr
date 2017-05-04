@@ -87,12 +87,20 @@ public class MainMenu extends AppCompatActivity {
 
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        unregisterReceiver(mReciver);
+    public void onResume() {
+        super.onResume();
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BluetoothService.getInstance().stop();
+    }
     //Switch activity using an intent
     public void startIngame(View v) {
         Intent myIntent = new Intent(MainMenu.this, InGameActivity.class);

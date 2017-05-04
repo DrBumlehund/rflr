@@ -4,15 +4,21 @@ import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class InGameActivity extends AppCompatActivity {
+
+    private static final String TAG = "IN_GAME_ACTIVITY";
 
     private boolean diceShown;
     private Spinner numberOfDiceSpinner, dieEyesSpinner;
@@ -24,6 +30,8 @@ public class InGameActivity extends AppCompatActivity {
     private Sensor mAccelerometer;
     private ShakeDetector mShakeDetector;
     private Cup cup;
+    private boolean hasSentCup;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,15 +39,20 @@ public class InGameActivity extends AppCompatActivity {
         setContentView(R.layout.activity_in_game);
         setupShakeDetector();
         diceShown = true;
+        hasSentCup = false;
+
         fillSpinnerArrays();
 
         GridView imageGridView = (GridView) findViewById(R.id.image_grid_view);
         imageAdapter = new ImageAdapter(this);
         imageGridView.setAdapter(imageAdapter);
 
-
         cup = new Cup(6);
         updateDiceImages();
+
+        BluetoothService.getInstance().setmHandler(mHandler);
+        BluetoothService.getInstance().setmContext(getApplicationContext());
+        BluetoothService.getInstance().startConnected();
     }
 
     private void setupShakeDetector() {
@@ -53,7 +66,6 @@ public class InGameActivity extends AppCompatActivity {
             //Define what should be done on shake event
             @Override
             public void onShake() {
-                // TODO: MAKE LOGIC SO THAT ROLL IS ONLY ALLOWED ONCE PR TURN...
                 cup.roolAllDice();
                 updateDiceImages();
             }
@@ -105,7 +117,7 @@ public class InGameActivity extends AppCompatActivity {
     }
 
     private void updateDiceImages() {
-        if (!cup.equals(null)) {
+        if (cup != null) {
             imageAdapter.setDiceImages(cup);
             imageAdapter.notifyDataSetChanged();
         }
@@ -136,11 +148,74 @@ public class InGameActivity extends AppCompatActivity {
         int eyes = (int) dieEyesSpinner.getSelectedItem();
         int numberOfDice = (int) numberOfDiceSpinner.getSelectedItem();
         Toast.makeText(getApplicationContext(), "Eyes: " + eyes + " Dice: " + numberOfDice, Toast.LENGTH_SHORT).show();
+
+        // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; AMOUNT OF DIES : DIE EYES
+        String message = BluetoothService.getInstance().getBluetoothName() + ";" + Constants.GUESS + ";" + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem();
+        byte[] bytes = message.getBytes();
+        Log.v(TAG, message + " ByteLength: " + bytes.length);
+        if (bytes != null) {
+            BluetoothService.getInstance().write(bytes);
+        }
     }
 
+    private void sendCup() {
+        // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; #1's : 1, #2's : 2, ...
+        String message = BluetoothService.getInstance().getBluetoothName() + ";" + Constants.CUP + ";" + cup.toString();
+        BluetoothService.getInstance().write(message.getBytes());
+        hasSentCup = true;
+    }
 
     public void liftBtnHandler(View v) {
+        sendCup();
         Toast.makeText(getApplicationContext(), "We have liftoff!", Toast.LENGTH_SHORT).show();
+    }
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case Constants.MESSAGE_READ:
+                    String[] readMessage = DecodeByteMessage((byte[]) msg.obj);
+                    int readMessageContentType = Integer.parseInt(readMessage[1]);
+                    switch (readMessageContentType) {
+                        case Constants.GUESS:
+                            TextView tv = (TextView) findViewById(R.id.last_call_value_label);
+                            tv.setText(readMessage[0] + " : " + readMessage[2]);
+                            break;
+                        case Constants.CUP:
+                            if (!hasSentCup) {
+                                sendCup();
+                            } else {
+                                hasSentCup = false;
+                            }
+                            break;
+                    }
+                    break;
+                case Constants.MESSAGE_WRITE:
+                    String[] writeMessage = DecodeByteMessage((byte[]) msg.obj);
+
+                    int writeMessageContentType = Integer.parseInt(writeMessage[1]);
+                    switch (writeMessageContentType) {
+                        case Constants.GUESS:
+                            TextView tv = (TextView) findViewById(R.id.last_call_value_label);
+                            tv.setText("You : " + writeMessage[2]);
+                            break;
+                        case Constants.CUP:
+                            break;
+                    }
+
+                    break;
+                case Constants.MESSAGE_TOAST:
+                    Toast.makeText(getApplicationContext(), msg.getData().getString(Constants.TOAST_KEY), Toast.LENGTH_LONG).show();
+                    break;
+            }
+        }
+    };
+
+
+    private String[] DecodeByteMessage(byte[] message) {
+        String readMsg = new String(message);
+        return readMsg.split(";");
     }
 
     @Override
@@ -155,5 +230,11 @@ public class InGameActivity extends AppCompatActivity {
         //unregister the Sensor Manager onPause
         mSensorManager.unregisterListener(mShakeDetector);
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BluetoothService.getInstance().stop();
     }
 }
