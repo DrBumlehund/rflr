@@ -35,21 +35,22 @@ public class BluetoothService extends Service {
     private Handler mHandler; // handler that gets info from Bluetooth service
 
 
-    public void startConnected() {
+    public synchronized void startConnected() {
         if (mConnectedThread != null) {
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
         if (mSocket != null) {
             mConnectedThread = new ConnectedThread(mSocket);
-            mConnectedThread.run();
+            mConnectedThread.start();
         }
     }
 
-    public void write(byte[] out) {
-        if (mConnectedThread != null) {
-            mConnectedThread.write(out);
+    public synchronized void write(byte[] out) {
+        if (mConnectedThread == null) {
+            startConnected();
         }
+        mConnectedThread.write(out);
     }
 
 
@@ -280,7 +281,7 @@ public class BluetoothService extends Service {
 
                 // Share the sent message with the UI activity.
                 Message writtenMsg = mHandler.obtainMessage(
-                        Constants.MESSAGE_WRITE, -1, -1, mmBuffer);
+                        Constants.MESSAGE_WRITE, bytes.length, -1, mmBuffer);
                 writtenMsg.sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Error occurred when sending data", e);

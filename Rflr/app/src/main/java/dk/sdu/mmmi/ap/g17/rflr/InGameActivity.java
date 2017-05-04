@@ -20,6 +20,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.UnsupportedEncodingException;
+
 public class InGameActivity extends AppCompatActivity {
 
     private static final String TAG = "IN_GAME_ACTIVITY";
@@ -42,7 +44,6 @@ public class InGameActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.v(TAG, "Whats up my dudes");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_in_game);
         setupShakeDetector();
@@ -50,7 +51,8 @@ public class InGameActivity extends AppCompatActivity {
         hasSentCup = false;
 
         Intent intent = new Intent(this, BluetoothService.class);
-        bindService(intent, mBTServiceConnection, Context.BIND_AUTO_CREATE);
+        bindService(intent, mBTServiceConnection, Context.BIND_IMPORTANT);
+        startService(intent);
 
         fillSpinnerArrays();
 
@@ -61,11 +63,19 @@ public class InGameActivity extends AppCompatActivity {
         cup = new Cup(6);
         updateDiceImages();
 
-        if (mBtServiceBound) {
-            mBTService.setmHandler(mHandler);
-            mBTService.startConnected();
-        }
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG, "Whats up my dudes");
+                if (mBtServiceBound) {
+                    mBTService.setmHandler(mHandler);
+                    mBTService.startConnected();
+                }
+            }
+        }, 2500);
     }
+
 
     private void setupShakeDetector() {
         // ShakeDetector initialization
@@ -165,7 +175,12 @@ public class InGameActivity extends AppCompatActivity {
         if (mBtServiceBound) {
             // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; AMOUNT OF DIES : DIE EYES
             String message = mBTService.getBluetoothName() + ";" + Constants.GUESS + ";" + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem();
-            byte[] bytes = message.getBytes();
+            byte[] bytes = new byte[0];
+            try {
+                bytes = message.getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                Log.e(TAG, "Cant encode guess", e);
+            }
             Log.v(TAG, message + " ByteLength: " + bytes.length);
             if (bytes != null) {
                 mBTService.write(bytes);
@@ -178,7 +193,11 @@ public class InGameActivity extends AppCompatActivity {
         if (mBtServiceBound) {
             // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; #1's : 1, #2's : 2, ...
             String message = mBTService.getBluetoothName() + ";" + Constants.CUP + ";" + cup.toString();
-            mBTService.write(message.getBytes());
+            try {
+                mBTService.write(message.getBytes("UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                Log.e(TAG, "can't encode cup", e);
+            }
             hasSentCup = true;
         }
     }
@@ -210,16 +229,11 @@ public class InGameActivity extends AppCompatActivity {
                     }
                     break;
                 case Constants.MESSAGE_WRITE:
-                    String[] writeMessage = DecodeByteMessage((byte[]) msg.obj);
-
-                    int writeMessageContentType = Integer.parseInt(writeMessage[1]);
-                    switch (writeMessageContentType) {
-                        case Constants.GUESS:
-                            TextView tv = (TextView) findViewById(R.id.last_call_value_label);
-                            tv.setText("You : " + writeMessage[2]);
-                            break;
-                        case Constants.CUP:
-                            break;
+                    if (!hasSentCup) {
+                        TextView tv = (TextView) findViewById(R.id.last_call_value_label);
+                        tv.setText("You : " + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem());
+                    } else {
+                        // TODO : LOGIC IF I JUST SENT THE CUP...
                     }
 
                     break;
@@ -233,6 +247,7 @@ public class InGameActivity extends AppCompatActivity {
     private ServiceConnection mBTServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.v(TAG, "BT Service Connected");
             BluetoothService.BluetoothServiceBinder binder = (BluetoothService.BluetoothServiceBinder) service;
             mBTService = binder.getService();
             mBtServiceBound = true;
@@ -245,7 +260,13 @@ public class InGameActivity extends AppCompatActivity {
     };
 
     private String[] DecodeByteMessage(byte[] message) {
-        String readMsg = new String(message);
+        String readMsg = null;
+        try {
+            readMsg = new String(message, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            Log.e(TAG, "can't decode message", e);
+        }
+        Log.v(TAG, "received message:" + readMsg);
         return readMsg.split(";");
     }
 
