@@ -20,23 +20,23 @@
     <TextView
         android:id="@+id/last_call_value_label"
         android:text="@string/last_call_labeltxt"
-        android:layout_width="100dp"
+        android:layout_width="135dp"
         android:layout_height="30dp"
         app:layout_constraintLeft_toRightOf="@+id/last_call_label"
         tools:layout_editor_absoluteY="2dp"
-        android:layout_marginLeft="-294dp" />
+        android:layout_marginLeft="0dp" />
     
     <Button
         android:id="@+id/lift_btn"
         android:layout_width="80dp"
         android:layout_height="40dp"
-        android:layout_marginRight="100dp"
+        android:layout_marginRight="24dp"
         android:onClick="liftBtnHandler"
         android:text="@string/in_game_lift_btntxt"
         app:layout_constraintLeft_toRightOf="@+id/last_call_value_label"
         app:layout_constraintRight_toRightOf="parent"
-        tools:layout_editor_absoluteY="2dp"
-        app:layout_constraintHorizontal_bias="0.0" />
+        tools:layout_editor_absoluteY="-8dp"
+        app:layout_constraintHorizontal_bias="1.0" />
 
     <Button
     android:id="@+id/hide_show_btn"
