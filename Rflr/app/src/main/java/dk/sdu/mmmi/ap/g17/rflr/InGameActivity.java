@@ -178,12 +178,7 @@ public class InGameActivity extends AppCompatActivity {
         if (mBtServiceBound) {
             // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; AMOUNT OF DIES : DIE EYES
             String message = mBTService.getBluetoothName() + ";" + Constants.GUESS + ";" + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem();
-            byte[] bytes = new byte[0];
-            try {
-                bytes = message.getBytes("UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                Log.e(TAG, "Cant encode guess", e);
-            }
+            byte[] bytes = message.getBytes();
             Log.v(TAG, message + " ByteLength: " + bytes.length);
             if (bytes != null) {
                 mBTService.write(bytes);
@@ -196,11 +191,7 @@ public class InGameActivity extends AppCompatActivity {
         if (mBtServiceBound) {
             // CUP MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; 1:#1's, 2:#2's, ...
             String message = mBTService.getBluetoothName() + ";" + Constants.CUP + ";" + cup.toString();
-            try {
-                mBTService.write(message.getBytes("UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                Log.e(TAG, "can't encode cup", e);
-            }
+            mBTService.write(message.getBytes());
             hasSentCup = true;
         }
     }
@@ -215,7 +206,9 @@ public class InGameActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case Constants.MESSAGE_READ:
-                    String[] readMessage = DecodeByteMessage((byte[]) msg.obj);
+                    byte[] readBuf = (byte[]) msg.obj;
+                    // construct a string from the valid bytes in the buffer
+                    String[] readMessage = new String(readBuf, 0, msg.arg1).split(";");
                     int readMessageContentType = Integer.parseInt(readMessage[1]);
                     switch (readMessageContentType) {
                         case Constants.GUESS:
@@ -229,9 +222,23 @@ public class InGameActivity extends AppCompatActivity {
                             // I received a cup...
                             if (hasSentCup) {
                                 // ...and I lifted
+                                if (!calculateWin(readMessage[2])) {
+                                    // I won, and get to remove a die.
+                                    Toast.makeText(getApplicationContext(), "You Win!", Toast.LENGTH_SHORT).show();
+                                    cup.removeDie();
+                                } else {
+                                    Toast.makeText(getApplicationContext(), "You lost...", Toast.LENGTH_SHORT).show();
+                                }
                                 hasSentCup = false;
                             } else {
                                 // ...and the other player lifted
+                                if (calculateWin(readMessage[2])) {
+                                    // I won, and get to remove a die.
+                                    Toast.makeText(getApplicationContext(), "You Win!", Toast.LENGTH_SHORT).show();
+                                    cup.removeDie();
+                                } else {
+                                    Toast.makeText(getApplicationContext(), "You lost...", Toast.LENGTH_SHORT).show();
+                                }
                                 // Send my cup over, so he can calculate score as well.
                                 sendCup();
                             }
@@ -265,10 +272,38 @@ public class InGameActivity extends AppCompatActivity {
         // Reconstruct the recieved cup, based on the format:
         // CUP MESSAGE FOLLOWS FORMAT : "1:x, 2:y, ..." Where x and y are number of dice of the given type.
         HashMap<Integer, Integer> otherCup = new HashMap<>();
+        HashMap<Integer, Integer> myCup = this.cup.getScore();
         String[] cupContents = cupString.split(",");
         for (String i : cupContents) {
             String[] j = i.split(":");
             otherCup.put(Integer.parseInt(j[0]), Integer.parseInt(j[1]));
+        }
+
+        // Add the dice from the other player to my cup, to count them
+        for (Integer d : otherCup.keySet()) {
+            if (myCup.containsKey(d)) {
+                myCup.put(d, myCup.get(d) + otherCup.get(d));
+            } else {
+                myCup.put(d, otherCup.get(d));
+            }
+        }
+
+        // Apply the rule of the die 1, being a joker, counting as any die
+        if (myCup.containsKey(1)) {
+            for (int d = 2; d >= 6; d++) {
+                if (myCup.containsKey(d)) {
+                    myCup.put(d, myCup.get(d) + myCup.get(1));
+                } else {
+                    myCup.put(d, myCup.get(1));
+                }
+            }
+            myCup.remove(1);
+        }
+
+        if (myCup.containsKey(LastGuessDieEyes)) {
+            if (myCup.get(LastGuessDieEyes) >= LastGuessDieCount) {
+                return true;
+            }
         }
 
         return false;
