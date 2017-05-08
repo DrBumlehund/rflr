@@ -22,6 +22,7 @@ import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.Random;
 
 public class InGameActivity extends AppCompatActivity {
 
@@ -41,9 +42,10 @@ public class InGameActivity extends AppCompatActivity {
     private boolean mBtServiceBound;
     private int LastGuessDieCount;
     private int LastGuessDieEyes;
-
     private BluetoothService mBTService;
-
+    private boolean myTurn = false;
+    private int myRandomNumber;
+    private boolean connectionEstablished = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,10 +72,11 @@ public class InGameActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Log.v(TAG, "Whats up my dudes");
                 if (mBtServiceBound) {
+                    Log.v(TAG, "Connection to Bluetooth Service was established");
                     mBTService.setmHandler(mHandler);
                     mBTService.startConnected();
+                    sendHandshake();
                 }
             }
         }, 2500);
@@ -149,6 +152,13 @@ public class InGameActivity extends AppCompatActivity {
     }
 
     /**
+     * Hides/Shows the buttons based upon the myTurn variable.
+     */
+    private void updateButtons() {
+        
+    }
+
+    /**
      * Controls whether to hide or show the dice rolled.
      *
      * @param v
@@ -181,7 +191,7 @@ public class InGameActivity extends AppCompatActivity {
             byte[] bytes = message.getBytes();
             Log.v(TAG, message + " ByteLength: " + bytes.length);
             if (bytes != null) {
-                mBTService.write(bytes);
+                mBTService.write(bytes, Constants.GUESS);
             }
         }
     }
@@ -191,7 +201,7 @@ public class InGameActivity extends AppCompatActivity {
         if (mBtServiceBound) {
             // CUP MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; 1:#1's, 2:#2's, ...
             String message = mBTService.getBluetoothName() + ";" + Constants.CUP + ";" + cup.toString();
-            mBTService.write(message.getBytes());
+            mBTService.write(message.getBytes(), Constants.CUP);
             hasSentCup = true;
         }
     }
@@ -201,6 +211,7 @@ public class InGameActivity extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), "We have liftoff!", Toast.LENGTH_SHORT).show();
     }
 
+
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -208,13 +219,15 @@ public class InGameActivity extends AppCompatActivity {
                 case Constants.MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
                     // construct a string from the valid bytes in the buffer
-                    String[] readMessage = new String(readBuf, 0, msg.arg1).split(";");
-                    int readMessageContentType = Integer.parseInt(readMessage[1]);
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    Log.v(TAG, "Received message: " + readMessage);
+                    String[] readMessageSplit = readMessage.split(";");
+                    int readMessageContentType = Integer.parseInt(readMessageSplit[1]);
                     switch (readMessageContentType) {
                         case Constants.GUESS:
                             TextView tv = (TextView) findViewById(R.id.last_call_value_label);
-                            tv.setText(readMessage[0] + " : " + readMessage[2]);
-                            String[] guess = readMessage[2].split(":");
+                            tv.setText(readMessageSplit[0] + " : " + readMessageSplit[2]);
+                            String[] guess = readMessageSplit[2].split(":");
                             LastGuessDieCount = Integer.parseInt(guess[0]);
                             LastGuessDieEyes = Integer.parseInt(guess[1]);
                             break;
@@ -222,7 +235,7 @@ public class InGameActivity extends AppCompatActivity {
                             // I received a cup...
                             if (hasSentCup) {
                                 // ...and I lifted
-                                if (!calculateWin(readMessage[2])) {
+                                if (!calculateWin(readMessageSplit[2])) {
                                     // I won, and get to remove a die.
                                     Toast.makeText(getApplicationContext(), "You Win!", Toast.LENGTH_SHORT).show();
                                     cup.removeDie();
@@ -232,7 +245,7 @@ public class InGameActivity extends AppCompatActivity {
                                 hasSentCup = false;
                             } else {
                                 // ...and the other player lifted
-                                if (calculateWin(readMessage[2])) {
+                                if (calculateWin(readMessageSplit[2])) {
                                     // I won, and get to remove a die.
                                     Toast.makeText(getApplicationContext(), "You Win!", Toast.LENGTH_SHORT).show();
                                     cup.removeDie();
@@ -243,15 +256,45 @@ public class InGameActivity extends AppCompatActivity {
                                 sendCup();
                             }
                             break;
+                        case Constants.HANDSHAKE:
+                            if (!connectionEstablished) {
+                                int otherRandom = Integer.parseInt(readMessageSplit[2]);
+                                // In case the two randoms are equal.
+                                if (otherRandom == myRandomNumber) {
+                                    // Send new random.
+                                    sendHandshake();
+                                    break;
+                                }
+                                myTurn = myRandomNumber > otherRandom;
+                                connectionEstablished = true;
+                                Log.v(TAG, "Connected to other device, myTurn = " + myTurn);
+                            }
+                            break;
                     }
+                    updateDiceImages();
                     break;
                 case Constants.MESSAGE_WRITE:
-                    if (!hasSentCup) {
-                        TextView tv = (TextView) findViewById(R.id.last_call_value_label);
-                        tv.setText("You : " + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem());
-                        LastGuessDieCount = Integer.parseInt(numberOfDiceSpinner.getSelectedItem().toString());
-                        LastGuessDieEyes = Integer.parseInt(dieEyesSpinner.getSelectedItem().toString());
-                    } else {
+                    switch (msg.arg2) {
+                        case Constants.GUESS:
+                            TextView tv = (TextView) findViewById(R.id.last_call_value_label);
+                            tv.setText("You : " + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem());
+                            LastGuessDieCount = Integer.parseInt(numberOfDiceSpinner.getSelectedItem().toString());
+                            LastGuessDieEyes = Integer.parseInt(dieEyesSpinner.getSelectedItem().toString());
+                            break;
+                        case Constants.CUP:
+                            break;
+                        case Constants.HANDSHAKE:
+                            // if I send handshake, I want to resend the handshake,
+                            // as long as i don't receive any myself
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (!connectionEstablished) {
+                                        Log.v(TAG, "Trying to send Handshake");
+                                        sendHandshake();
+                                    }
+                                }
+                            }, 500);
                     }
 
                     break;
@@ -309,6 +352,16 @@ public class InGameActivity extends AppCompatActivity {
         return false;
     }
 
+
+    private void sendHandshake() {
+        if (mBtServiceBound) {
+            // Send random integer over, biggest will start.
+            myRandomNumber = new Random().nextInt();
+            String message = mBTService.getBluetoothName() + ";" + Constants.HANDSHAKE + ";" + myRandomNumber;
+            Log.v(TAG, "sending message, for handshake : " + message);
+            mBTService.write(message.getBytes(), Constants.HANDSHAKE);
+        }
+    }
 
     private ServiceConnection mBTServiceConnection = new ServiceConnection() {
         @Override

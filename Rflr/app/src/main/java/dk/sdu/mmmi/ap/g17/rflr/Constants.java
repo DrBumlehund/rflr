@@ -14,6 +14,7 @@ public class Constants {
     // MESSAGE CONTENT TYPES
     public static final int GUESS = 0;
     public static final int CUP = 1;
+    public static final int HANDSHAKE = 2;
 
     // STRINGS
     public static final String TOAST_KEY = "toast";

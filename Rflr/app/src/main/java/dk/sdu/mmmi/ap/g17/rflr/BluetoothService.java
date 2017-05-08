@@ -46,11 +46,11 @@ public class BluetoothService extends Service {
         }
     }
 
-    public synchronized void write(byte[] out) {
+    public synchronized void write(byte[] out, int msgType) {
         if (mConnectedThread == null) {
             startConnected();
         }
-        mConnectedThread.write(out);
+        mConnectedThread.write(out, msgType);
     }
 
 
@@ -275,13 +275,13 @@ public class BluetoothService extends Service {
         }
 
         // Call this from the main activity to send data to the remote device.
-        public void write(byte[] bytes) {
+        public void write(byte[] bytes, int msgType) {
             try {
                 mmOutStream.write(bytes);
 
                 // Share the sent message with the UI activity.
                 Message writtenMsg = mHandler.obtainMessage(
-                        Constants.MESSAGE_WRITE, bytes.length, -1, mmBuffer);
+                        Constants.MESSAGE_WRITE, bytes.length, msgType, mmBuffer);
                 writtenMsg.sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Error occurred when sending data", e);
