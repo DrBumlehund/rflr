@@ -21,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 
 public class InGameActivity extends AppCompatActivity {
 
@@ -38,6 +39,8 @@ public class InGameActivity extends AppCompatActivity {
     private Cup cup;
     private boolean hasSentCup;
     private boolean mBtServiceBound;
+    private int LastGuessDieCount;
+    private int LastGuessDieEyes;
 
     private BluetoothService mBTService;
 
@@ -191,7 +194,7 @@ public class InGameActivity extends AppCompatActivity {
     private void sendCup() {
 
         if (mBtServiceBound) {
-            // GUESS MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; #1's : 1, #2's : 2, ...
+            // CUP MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; 1:#1's, 2:#2's, ...
             String message = mBTService.getBluetoothName() + ";" + Constants.CUP + ";" + cup.toString();
             try {
                 mBTService.write(message.getBytes("UTF-8"));
@@ -218,12 +221,19 @@ public class InGameActivity extends AppCompatActivity {
                         case Constants.GUESS:
                             TextView tv = (TextView) findViewById(R.id.last_call_value_label);
                             tv.setText(readMessage[0] + " : " + readMessage[2]);
+                            String[] guess = readMessage[2].split(":");
+                            LastGuessDieCount = Integer.parseInt(guess[0]);
+                            LastGuessDieEyes = Integer.parseInt(guess[1]);
                             break;
                         case Constants.CUP:
-                            if (!hasSentCup) {
-                                sendCup();
-                            } else {
+                            // I received a cup...
+                            if (hasSentCup) {
+                                // ...and I lifted
                                 hasSentCup = false;
+                            } else {
+                                // ...and the other player lifted
+                                // Send my cup over, so he can calculate score as well.
+                                sendCup();
                             }
                             break;
                     }
@@ -232,8 +242,9 @@ public class InGameActivity extends AppCompatActivity {
                     if (!hasSentCup) {
                         TextView tv = (TextView) findViewById(R.id.last_call_value_label);
                         tv.setText("You : " + numberOfDiceSpinner.getSelectedItem() + ":" + dieEyesSpinner.getSelectedItem());
+                        LastGuessDieCount = Integer.parseInt(numberOfDiceSpinner.getSelectedItem().toString());
+                        LastGuessDieEyes = Integer.parseInt(dieEyesSpinner.getSelectedItem().toString());
                     } else {
-                        // TODO : LOGIC IF I JUST SENT THE CUP...
                     }
 
                     break;
@@ -243,6 +254,26 @@ public class InGameActivity extends AppCompatActivity {
             }
         }
     };
+
+    /**
+     * Calculates if the last guess wins the round
+     *
+     * @param cupString
+     * @return
+     */
+    private boolean calculateWin(String cupString) {
+        // Reconstruct the recieved cup, based on the format:
+        // CUP MESSAGE FOLLOWS FORMAT : "1:x, 2:y, ..." Where x and y are number of dice of the given type.
+        HashMap<Integer, Integer> otherCup = new HashMap<>();
+        String[] cupContents = cupString.split(",");
+        for (String i : cupContents) {
+            String[] j = i.split(":");
+            otherCup.put(Integer.parseInt(j[0]), Integer.parseInt(j[1]));
+        }
+
+        return false;
+    }
+
 
     private ServiceConnection mBTServiceConnection = new ServiceConnection() {
         @Override

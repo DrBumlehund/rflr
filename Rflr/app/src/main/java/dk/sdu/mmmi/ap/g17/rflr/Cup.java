@@ -65,7 +65,7 @@ public class Cup {
         HashMap<Integer, Integer> score = getScore();
         for (Integer die :
                 score.keySet()) {
-            cup += score.get(die) + ":" + die + ",";
+            cup += die + ":" + score.get(die) + ",";
         }
         cup = cup.substring(cup.length() - 1);
         return cup;
@@ -79,6 +79,11 @@ public class Cup {
         return dice;
     }
 
+    /**
+     * Key = Die eyes, Value = amount of that Die.
+     *
+     * @return
+     */
     public HashMap<Integer, Integer> getScore() {
         score = new HashMap<>();
 
