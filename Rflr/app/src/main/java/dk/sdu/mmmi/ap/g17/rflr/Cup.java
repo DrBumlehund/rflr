@@ -72,7 +72,9 @@ public class Cup {
     }
 
     public void removeDie() {
-        dice.remove(dice.size() - 1);
+        if (!dice.isEmpty()) {
+            dice.remove(dice.size() - 1);
+        }
     }
 
     public ArrayList<Die> getDice() {

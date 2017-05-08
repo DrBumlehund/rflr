@@ -148,6 +148,11 @@ public class InGameActivity extends AppCompatActivity {
         if (cup != null) {
             imageAdapter.setDiceImages(cup);
             imageAdapter.notifyDataSetChanged();
+
+            if (cup.getDice().isEmpty()) {
+                Toast.makeText(getApplicationContext(), "You win the Game, You are superior!", Toast.LENGTH_LONG);
+                Toast.makeText(getApplicationContext(), "Go back to start new game", Toast.LENGTH_LONG);
+            }
         }
         updateButtons();
     }
@@ -228,7 +233,6 @@ public class InGameActivity extends AppCompatActivity {
 
     public void liftBtnHandler(View v) {
         sendCup();
-        Toast.makeText(getApplicationContext(), "We have liftoff!", Toast.LENGTH_SHORT).show();
     }
 
 
