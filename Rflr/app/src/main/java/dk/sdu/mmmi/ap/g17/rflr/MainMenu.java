@@ -16,6 +16,11 @@ import android.view.View;
 
 public class MainMenu extends AppCompatActivity {
 
+  /*
+   * Be sure to check out our README.txt, it contains information on how this
+   * application (should) works.  
+   */
+
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final String TAG = "MAIN_MENU_ACTIVITY";
