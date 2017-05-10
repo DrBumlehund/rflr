@@ -347,20 +347,15 @@ public class InGameActivity extends AppCompatActivity {
         // Reconstruct the recieved cup, based on the format:
         // CUP MESSAGE FOLLOWS FORMAT : "1:x, 2:y, ..." Where x and y are number of dice of the given type.
         Log.v(TAG, "received CUP: " + cupString + " - MyCup = " + cup.toString());
-        HashMap<Integer, Integer> otherCup = new HashMap<>();
         HashMap<Integer, Integer> myCup = this.cup.getScore();
         String[] cupContents = cupString.split(",");
         for (String i : cupContents) {
             String[] j = i.split(":");
-            otherCup.put(Integer.parseInt(j[0]), Integer.parseInt(j[1]));
-        }
-
-        // Add the dice from the other player to my cup, to count them
-        for (Integer d : otherCup.keySet()) {
-            if (myCup.containsKey(d)) {
-                myCup.put(d, myCup.get(d) + otherCup.get(d));
+            int eyes = Integer.parseInt(j[0]), number = Integer.parseInt(j[1]);
+            if (myCup.containsKey(eyes)) {
+                myCup.put(eyes, myCup.get(eyes) + number);
             } else {
-                myCup.put(d, otherCup.get(d));
+                myCup.put(eyes, number);
             }
         }
 
@@ -375,13 +370,13 @@ public class InGameActivity extends AppCompatActivity {
             }
             myCup.remove(1);
         }
+        cup.newRound();
 
         if (myCup.containsKey(LastGuessDieEyes)) {
             if (myCup.get(LastGuessDieEyes) >= LastGuessDieCount) {
                 return true;
             }
         }
-        cup.newRound();
         return false;
     }
 
