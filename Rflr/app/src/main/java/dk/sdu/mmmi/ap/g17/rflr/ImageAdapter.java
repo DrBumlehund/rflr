@@ -1,6 +1,7 @@
 package dk.sdu.mmmi.ap.g17.rflr;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -18,13 +19,13 @@ public class ImageAdapter extends BaseAdapter {
     private ArrayList<Integer> imagesToShow;
     private Context mContext;
 
-    public ImageAdapter(Context con){
+    public ImageAdapter(Context con) {
         mContext = con;
         imagesToShow = new ArrayList<>();
         addImages();
     }
 
-    private void addImages(){
+    private void addImages() {
         imagesToShow.add(R.mipmap.die1);
         imagesToShow.add(R.mipmap.die2);
         imagesToShow.add(R.mipmap.die3);
@@ -36,11 +37,12 @@ public class ImageAdapter extends BaseAdapter {
     /**
      * Sets images to show in the view.
      * This method must be called each time your cup changes to show the correct images
+     *
      * @param cup holding dice for image representation
      */
-    public void setDiceImages(Cup cup){
+    public void setDiceImages(Cup cup) {
         imagesToShow.clear();
-        for (Die die: cup.getDice()){
+        for (Die die : cup.getDice()) {
             imagesToShow.add(getDieImage(die.getValue()));
         }
     }
@@ -66,9 +68,10 @@ public class ImageAdapter extends BaseAdapter {
         if (convertView == null) {
             // if it's not recycled, initialize some attributes
             imageView = new ImageView(mContext);
-            imageView.setLayoutParams(new GridView.LayoutParams(200, 200));
+            int x = Resources.getSystem().getDisplayMetrics().widthPixels / 6;
+            imageView.setLayoutParams(new GridView.LayoutParams(x, x));
             imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            imageView.setPadding(8, 8, 8, 8);
+            imageView.setPadding(0, 0, 0, 0);
         } else {
             imageView = (ImageView) convertView;
         }
@@ -78,17 +81,24 @@ public class ImageAdapter extends BaseAdapter {
 
     /**
      * Used for getting the image of an integer representation of the die eyes
+     *
      * @param eyes
      * @return
      */
     private int getDieImage(int eyes) {
         switch (eyes) {
-            case 1: return R.mipmap.die1;
-            case 2: return R.mipmap.die2;
-            case 3: return R.mipmap.die3;
-            case 4: return R.mipmap.die4;
-            case 5: return R.mipmap.die5;
-            default: return R.mipmap.die6;
+            case 1:
+                return R.mipmap.die1;
+            case 2:
+                return R.mipmap.die2;
+            case 3:
+                return R.mipmap.die3;
+            case 4:
+                return R.mipmap.die4;
+            case 5:
+                return R.mipmap.die5;
+            default:
+                return R.mipmap.die6;
         }
     }
 }

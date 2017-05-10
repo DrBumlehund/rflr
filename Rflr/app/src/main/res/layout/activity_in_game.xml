@@ -6,107 +6,156 @@
     android:layout_height="match_parent"
     tools:context="dk.sdu.mmmi.ap.g17.rflr.InGameActivity">
 
-    <TextView
-        android:id="@+id/last_call_label"
-        android:text="@string/lift_labeltxt"
-        android:layout_width="80dp"
-        android:layout_height="30dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="2dp"
-        app:layout_constraintHorizontal_bias="0.147" />
-    
-    <TextView
-        android:id="@+id/last_call_value_label"
-        android:text="@string/last_call_labeltxt"
-        android:layout_width="135dp"
-        android:layout_height="30dp"
-        app:layout_constraintLeft_toRightOf="@+id/last_call_label"
-        tools:layout_editor_absoluteY="2dp"
-        android:layout_marginLeft="0dp" />
-    
-    <Button
-        android:id="@+id/lift_btn"
-        android:layout_width="80dp"
-        android:layout_height="40dp"
-        android:layout_marginRight="24dp"
-        android:onClick="liftBtnHandler"
-        android:text="@string/in_game_lift_btntxt"
-        app:layout_constraintLeft_toRightOf="@+id/last_call_value_label"
-        app:layout_constraintRight_toRightOf="parent"
-        tools:layout_editor_absoluteY="-8dp"
-        app:layout_constraintHorizontal_bias="1.0" />
-
-    <Button
-    android:id="@+id/hide_show_btn"
-    android:layout_width="344dp"
-    android:layout_height="0dp"
-        android:onClick="hideShowDiceBtnHandler"
-    android:text="@string/in_game_hide_btntxt"
-    app:layout_constraintLeft_toLeftOf="parent"
-    app:layout_constraintRight_toRightOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent" />
-
-
-    <Button
-        android:id="@+id/make_guess_btn"
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/last_call_lift_layout"
         android:layout_width="344dp"
+        android:layout_height="50dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        app:layout_constraintLeft_toLeftOf="@+id/image_grid_view"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintTop_creator="1">
+
+        <TextView
+            android:id="@+id/last_call_label"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginLeft="-40dp"
+            android:layout_marginTop="1dp"
+            android:text="@string/lift_labeltxt"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/last_call_value_label"
+            android:layout_width="130dp"
+            android:layout_height="48dp"
+            android:layout_marginLeft="3dp"
+            android:layout_marginTop="2dp"
+            android:text="@string/last_call_labeltxt"
+            app:layout_constraintBaseline_toBaselineOf="@+id/last_call_label"
+            app:layout_constraintLeft_toRightOf="@+id/last_call_label"
+            tools:layout_constraintBaseline_creator="1" />
+
+        <Button
+            android:id="@+id/lift_btn"
+            android:layout_width="88dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginRight="-40dp"
+            android:layout_marginTop="-34dp"
+            android:onClick="liftBtnHandler"
+            android:text="@string/in_game_lift_btntxt"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintLeft_toRightOf="@+id/last_call_value_label"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="parent"
+            tools:layout_constraintTop_creator="1" />
+    </android.support.constraint.ConstraintLayout>
+
+
+    <GridView
+        android:id="@+id/image_grid_view"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:onClick="makeGuessBtnHandler"
-        android:text="@string/in_game_make_guess_btntxt"
+        android:gravity="center"
+        android:padding="1dp"
+        android:horizontalSpacing="1dp"
+        android:verticalSpacing="1dp"
+        android:numColumns="2"
+        android:stretchMode="columnWidth"
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toTopOf="@+id/die_eyes_label"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintVertical_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/hide_show_btn" />
+        app:layout_constraintTop_toBottomOf="@+id/last_call_lift_layout"
+        tools:layout_constraintBottom_creator="1"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintTop_creator="1" />
+
 
     <TextView
         android:id="@+id/number_of_dice_label"
-        android:text="@string/in_game_number_of_dice_spinner_label"
         android:layout_width="100dp"
         android:layout_height="30dp"
         android:layout_marginLeft="42dp"
-        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginStart="42dp"
+        android:text="@string/in_game_number_of_dice_spinner_label"
         app:layout_constraintBottom_toTopOf="@+id/make_guess_btn"
-        android:layout_marginStart="42dp" />
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginBottom="5dp" />
 
     <TextView
         android:id="@+id/die_eyes_label"
-        android:text="@string/in_game_die_eyes_spinner_label"
         android:layout_width="100dp"
         android:layout_height="30dp"
-        android:layout_marginLeft="42dp"
-        app:layout_constraintLeft_toRightOf="parent"
+        android:layout_marginLeft="-318dp"
+        android:layout_marginStart="42dp"
+        android:text="@string/in_game_die_eyes_spinner_label"
         app:layout_constraintBottom_toTopOf="@+id/number_of_dice_spinner"
-        android:layout_marginStart="42dp" />
+        app:layout_constraintLeft_toRightOf="parent"
+        android:layout_marginBottom="-8dp" />
 
     <Spinner
         android:id="@+id/number_of_dice_spinner"
         android:layout_width="100dp"
         android:layout_height="30dp"
+        app:layout_constraintBottom_toTopOf="@+id/make_guess_btn"
         app:layout_constraintLeft_toRightOf="@+id/number_of_dice_label"
-        app:layout_constraintBottom_toTopOf="@+id/make_guess_btn"/>
+        android:layout_marginLeft="0dp"
+        android:layout_marginBottom="5dp" />
 
     <Spinner
         android:id="@+id/die_eyes_spinner"
         android:layout_width="100dp"
         android:layout_height="30dp"
+        app:layout_constraintBottom_toTopOf="@+id/number_of_dice_spinner"
         app:layout_constraintLeft_toRightOf="@+id/die_eyes_label"
-        app:layout_constraintBottom_toTopOf="@+id/number_of_dice_spinner"/>
+        android:layout_marginLeft="0dp"
+        android:layout_marginBottom="0dp" />
 
-    <GridView
-        android:id="@+id/image_grid_view"
-        android:layout_width="344dp"
-        android:layout_height="339dp"
-        android:layout_marginTop="32dp"
-        android:numColumns="auto_fit"
-        android:verticalSpacing="10dp"
-        android:horizontalSpacing="10dp"
-        android:stretchMode="columnWidth"
-        android:gravity="center"
+
+    <Button
+        android:id="@+id/make_guess_btn"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:onClick="makeGuessBtnHandler"
+        android:text="@string/in_game_make_guess_btntxt"
+        app:layout_constraintBottom_toTopOf="@+id/hide_show_btn"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lift_btn"
-        app:layout_constraintBottom_toTopOf="@+id/die_eyes_label" />
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1" />
+
+    <Button
+        android:id="@+id/hide_show_btn"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:onClick="hideShowDiceBtnHandler"
+        android:text="@string/in_game_hide_btntxt"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1" />
 
 
 </android.support.constraint.ConstraintLayout>

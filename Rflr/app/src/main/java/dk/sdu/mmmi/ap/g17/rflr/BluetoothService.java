@@ -50,7 +50,9 @@ public class BluetoothService extends Service {
         if (mConnectedThread == null) {
             startConnected();
         }
-        mConnectedThread.write(out, msgType);
+        if (mConnectedThread != null) {
+            mConnectedThread.write(out, msgType);
+        }
     }
 
 
