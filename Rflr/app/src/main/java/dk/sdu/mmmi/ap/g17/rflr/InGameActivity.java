@@ -224,6 +224,8 @@ public class InGameActivity extends AppCompatActivity {
     private void sendCup() {
 
         if (mBtServiceBound) {
+            LastGuessDieCount = -1;
+            LastGuessDieEyes = -1;
             // CUP MESSAGE FOLLOWS FORMAT : DEVICE BLUETOOTH NAME ; MESSAGE TYPE ; 1:#1's, 2:#2's, ... , 6:#6's ;
             String message = mBTService.getBluetoothName() + ";" + Constants.CUP + ";" + cup.toString() + ";";
             mBTService.write(message.getBytes(), Constants.CUP);
@@ -344,6 +346,7 @@ public class InGameActivity extends AppCompatActivity {
     private boolean calculateWin(String cupString) {
         // Reconstruct the recieved cup, based on the format:
         // CUP MESSAGE FOLLOWS FORMAT : "1:x, 2:y, ..." Where x and y are number of dice of the given type.
+        Log.v(TAG, "received CUP: " + cupString + " - MyCup = " + cup.toString());
         HashMap<Integer, Integer> otherCup = new HashMap<>();
         HashMap<Integer, Integer> myCup = this.cup.getScore();
         String[] cupContents = cupString.split(",");
@@ -363,7 +366,7 @@ public class InGameActivity extends AppCompatActivity {
 
         // Apply the rule of the die 1, being a joker, counting as any die
         if (myCup.containsKey(1)) {
-            for (int d = 2; d >= 6; d++) {
+            for (int d = 2; d <= 6; d++) {
                 if (myCup.containsKey(d)) {
                     myCup.put(d, myCup.get(d) + myCup.get(1));
                 } else {
@@ -383,7 +386,7 @@ public class InGameActivity extends AppCompatActivity {
     }
 
 
-    private void sendHandshake() {
+    private synchronized void sendHandshake() {
         if (mBtServiceBound) {
             // Send random integer over, biggest will start.
             myRandomNumber = new Random().nextInt();

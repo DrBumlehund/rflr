@@ -1,5 +1,7 @@
 package dk.sdu.mmmi.ap.g17.rflr;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,7 +15,6 @@ import java.util.HashMap;
 public class Cup {
 
     private static final int DEFAULT_N_DICE = 6;
-    private HashMap<Integer, Integer> score;
 
     public Cup() {
         this(DEFAULT_N_DICE);
@@ -50,9 +51,10 @@ public class Cup {
     }
 
     private boolean hasStair() {
-        Collections.sort(dice);
-        for (int i = 0; i < dice.size(); i++) {
-            if (dice.get(i).getValue() != i + 1) {
+        ArrayList<Die> tmpDice = new ArrayList<>(dice);
+        Collections.sort(tmpDice);
+        for (int i = 0; i < tmpDice.size(); i++) {
+            if (tmpDice.get(i).getValue() != i + 1) {
                 return false;
             }
         }
@@ -67,7 +69,8 @@ public class Cup {
                 score.keySet()) {
             cup += die + ":" + score.get(die) + ",";
         }
-        cup = cup.substring(cup.length() - 1);
+        cup = cup.substring(0, cup.length() - 1);
+        Log.v("CUP", cup);
         return cup;
     }
 
@@ -87,20 +90,20 @@ public class Cup {
      * @return
      */
     public HashMap<Integer, Integer> getScore() {
-        score = new HashMap<>();
+        HashMap<Integer, Integer> _score = new HashMap<>();
 
         if (hasStair()) {
-            score.put(1, dice.size() + 1);
+            _score.put(1, dice.size() + 1);
         } else {
             for (Die d : dice) {
-                if (score.containsKey(d.getValue())) {
-                    score.put(d.getValue(), score.get(d.getValue()) + 1);
+                if (_score.containsKey(d.getValue())) {
+                    _score.put(d.getValue(), _score.get(d.getValue()) + 1);
                 } else {
-                    score.put(d.getValue(), 1);
+                    _score.put(d.getValue(), 1);
                 }
             }
         }
 
-        return score;
+        return _score;
     }
 }
